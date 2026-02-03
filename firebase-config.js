@@ -18,12 +18,12 @@ import { getStorage, ref, uploadBytes, getDownloadURL, listAll, deleteObject } f
 // 🔧 ここを自分のFirebase設定に置き換えてください
 // ========================================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBfi8PrOxfnTxnAVgudBUhMnQLnhtwL0B8",
+    authDomain: "photog-gallery.firebaseapp.com",
+    projectId: "photog-gallery",
+    storageBucket: "photog-gallery.firebasestorage.app",
+    messagingSenderId: "461126964577",
+    appId: "1:461126964577:web:4f5b92e98399a12cc8e120"
 };
 
 // Firebase初期化
