@@ -1,0 +1,25 @@
+{
+  "watermark": "© Your Name",
+  "images": [
+    {
+      "src": "images/landscape1.jpg",
+      "category": "landscape",
+      "title": "Mountain View"
+    },
+    {
+      "src": "images/landscape2.jpg",
+      "category": "landscape",
+      "title": "Ocean Sunset"
+    },
+    {
+      "src": "images/portrait1.jpg",
+      "category": "portrait",
+      "title": "Portrait 1"
+    },
+    {
+      "src": "images/street1.jpg",
+      "category": "street",
+      "title": "City Lights"
+    }
+  ]
+}

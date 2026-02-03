@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Photo Gallery - 美しい写真コレクション">
+    <title>Photo Gallery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">Gallery</h1>
+            <nav class="nav">
+                <button class="nav-btn active" data-filter="all">All</button>
+                <button class="nav-btn" data-filter="landscape">Landscape</button>
+                <button class="nav-btn" data-filter="portrait">Portrait</button>
+                <button class="nav-btn" data-filter="street">Street</button>
+                <a href="admin.html" class="nav-btn admin-link">Admin</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Gallery Grid -->
+    <main class="gallery-container">
+        <div class="gallery-grid" id="gallery">
+            <!-- ユーザーの写真 -->
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/L1000060.jpg" data-full="images/アートブック作成用/L1000060.jpg" alt="紫陽花"
+                    loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">紫陽花</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/L1000152.jpg" data-full="images/アートブック作成用/L1000152.jpg" alt="水面の花"
+                    loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">水面の花</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/20251003-L1011979.jpg" data-full="images/アートブック作成用/20251003-L1011979.jpg"
+                    alt="森の静寂" loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">森の静寂</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/L1000157.jpg" data-full="images/アートブック作成用/L1000157.jpg" alt="Landscape"
+                    loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">自然の詩</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/L1000225.jpg" data-full="images/アートブック作成用/L1000225.jpg" alt="Landscape"
+                    loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">光と影</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/L1000837.jpg" data-full="images/アートブック作成用/L1000837.jpg" alt="Landscape"
+                    loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">風景</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/L1000877.jpg" data-full="images/アートブック作成用/L1000877.jpg" alt="Landscape"
+                    loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">静けさ</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/L1000940.jpg" data-full="images/アートブック作成用/L1000940.jpg" alt="Landscape"
+                    loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">自然</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/L1000949.jpg" data-full="images/アートブック作成用/L1000949.jpg" alt="Landscape"
+                    loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">木漏れ日</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/20251003-L1012027-Edit.jpg"
+                    data-full="images/アートブック作成用/20251003-L1012027-Edit.jpg" alt="Landscape" loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">朝霧</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/20251008-L1012180-Edit-Edit.jpg"
+                    data-full="images/アートブック作成用/20251008-L1012180-Edit-Edit.jpg" alt="Landscape" loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">光の道</span>
+                </div>
+            </div>
+            <div class="gallery-item" data-watermark="© Aru" data-category="landscape">
+                <img src="images/アートブック作成用/20251008-L1012194-Edit.jpg"
+                    data-full="images/アートブック作成用/20251008-L1012194-Edit.jpg" alt="Landscape" loading="lazy">
+                <div class="overlay">
+                    <span class="photo-title">夕暮れ</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close" aria-label="Close">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev" aria-label="Previous">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+        <button class="lightbox-nav lightbox-next" id="lightbox-next" aria-label="Next">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </button>
+        <div class="lightbox-content" data-watermark="© Your Name">
+            <img src="" alt="" id="lightbox-img">
+            <p class="lightbox-caption" id="lightbox-caption"></p>
+        </div>
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+    </div>
+
+    <script src="gallery.js"></script>
+    <!-- Firebase動的読み込みを有効にする場合は以下のコメントを解除 -->
+    <script type="module" src="gallery-loader.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Photo Gallery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+    <!-- ログイン画面 -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1 class="login-logo">Gallery</h1>
+                <p class="login-subtitle">管理者ログイン</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="email">メールアドレス</label>
+                    <input type="email" id="email" required placeholder="admin@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">パスワード</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary">ログイン</button>
+                <p id="login-error" class="error-message"></p>
+            </form>
+            <a href="index.html" class="back-link">← ギャラリーに戻る</a>
+        </div>
+    </div>
+
+    <!-- 管理画面 -->
+    <div id="admin-screen" class="admin-screen hidden">
+        <!-- ヘッダー -->
+        <header class="admin-header">
+            <div class="header-content">
+                <h1 class="logo">Gallery <span class="admin-badge">Admin</span></h1>
+                <div class="header-actions">
+                    <span id="user-email" class="user-email"></span>
+                    <button id="logout-btn" class="btn btn-secondary">ログアウト</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- メインコンテンツ -->
+        <main class="admin-main">
+            <!-- アップロードセクション -->
+            <section class="upload-section">
+                <h2>写真をアップロード</h2>
+                <form id="upload-form" class="upload-form">
+                    <div class="upload-dropzone" id="dropzone">
+                        <div class="dropzone-content">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <p>ここに画像をドロップ</p>
+                            <p class="dropzone-hint">または クリックして選択</p>
+                        </div>
+                        <input type="file" id="file-input" accept="image/*" multiple hidden>
+                    </div>
+
+                    <div id="preview-container" class="preview-container hidden">
+                        <h3>アップロード予定の画像</h3>
+                        <div id="preview-grid" class="preview-grid"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="category">カテゴリ</label>
+                            <select id="category" required>
+                                <option value="landscape">Landscape（風景）</option>
+                                <option value="portrait">Portrait（ポートレート）</option>
+                                <option value="street">Street（ストリート）</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="title">タイトル</label>
+                            <input type="text" id="title" required placeholder="写真のタイトル">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-upload" disabled>
+                        <span class="btn-text">アップロード</span>
+                        <span class="btn-loading hidden">アップロード中...</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- 画像管理セクション -->
+            <section class="manage-section">
+                <h2>アップロード済みの画像</h2>
+                <div id="images-grid" class="images-grid">
+                    <p class="loading-message">読み込み中...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 削除確認モーダル -->
+    <div id="delete-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>削除の確認</h3>
+            <p>この画像を削除しますか？この操作は取り消せません。</p>
+            <div class="modal-actions">
+                <button id="cancel-delete" class="btn btn-secondary">キャンセル</button>
+                <button id="confirm-delete" class="btn btn-danger">削除する</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="admin.js"></script>
+</body>
+
+</html>
