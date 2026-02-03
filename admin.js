@@ -104,15 +104,90 @@ fileInput.addEventListener('change', (e) => {
     handleFiles(e.target.files);
 });
 
-// ファイル処理
-function handleFiles(files) {
+// ========================================
+// 画像圧縮機能
+// ========================================
+
+/**
+ * 画像を圧縮する
+ * @param {File} file - 元の画像ファイル
+ * @param {number} maxWidth - 最大幅（デフォルト: 2048px）
+ * @param {number} quality - JPEG品質（0-1、デフォルト: 0.85）
+ * @returns {Promise<File>} 圧縮された画像ファイル
+ */
+async function compressImage(file, maxWidth = 2048, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                // 元のサイズを取得
+                let width = img.width;
+                let height = img.height;
+
+                // リサイズが必要か確認
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+
+                // Canvasで圧縮
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Blobに変換
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        // 新しいFileオブジェクトを作成
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        });
+                        console.log(`圧縮: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+                        resolve(compressedFile);
+                    } else {
+                        reject(new Error('圧縮に失敗しました'));
+                    }
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
+        reader.readAsDataURL(file);
+    });
+}
+
+// ファイル処理（圧縮付き）
+async function handleFiles(files) {
     const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
 
-    imageFiles.forEach(file => {
+    // 圧縮処理中の表示
+    if (imageFiles.length > 0) {
+        dropzone.classList.add('processing');
+        dropzone.querySelector('.dropzone-content p').textContent = '画像を処理中...';
+    }
+
+    for (const file of imageFiles) {
         if (!selectedFiles.find(f => f.name === file.name)) {
-            selectedFiles.push(file);
+            try {
+                // 画像を圧縮
+                const compressedFile = await compressImage(file);
+                selectedFiles.push(compressedFile);
+            } catch (error) {
+                console.error('圧縮エラー:', error);
+                // 圧縮失敗時は元のファイルを使用
+                selectedFiles.push(file);
+            }
         }
-    });
+    }
+
+    // 表示を戻す
+    dropzone.classList.remove('processing');
+    dropzone.querySelector('.dropzone-content p').textContent = 'ここに画像をドロップ';
 
     updatePreview();
     updateUploadButton();
