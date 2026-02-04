@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://photog-9szj.vercel.app", "http://localhost:*"],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Authorization", "Content-Length", "X-Requested-With"]
+  }
+]

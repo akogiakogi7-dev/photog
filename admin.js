@@ -105,17 +105,34 @@ fileInput.addEventListener('change', (e) => {
 });
 
 // ========================================
-// 画像圧縮機能
+// 画像圧縮機能（高画質モード）
 // ========================================
 
+// 圧縮設定
+const COMPRESSION_CONFIG = {
+    maxWidth: 3840,           // 4K解像度まで対応
+    jpegQuality: 0.92,        // 高画質JPEG（92%）
+    pngQuality: 0.95,         // PNG品質
+    skipThreshold: 2 * 1024 * 1024,  // 2MB以下はスキップ
+    maxSizeForProcess: 15 * 1024 * 1024  // 15MB以上は必ず処理
+};
+
 /**
- * 画像を圧縮する
+ * 画像を最適化する（高画質維持）
+ * - 色情報やメタデータを可能な限り保持
+ * - PNGはPNGのまま、JPEGはJPEGのまま処理
+ * - 小さいファイルは処理をスキップ
  * @param {File} file - 元の画像ファイル
- * @param {number} maxWidth - 最大幅（デフォルト: 2048px）
- * @param {number} quality - JPEG品質（0-1、デフォルト: 0.85）
- * @returns {Promise<File>} 圧縮された画像ファイル
+ * @returns {Promise<File>} 最適化された画像ファイル
  */
-async function compressImage(file, maxWidth = 2048, quality = 0.85) {
+async function compressImage(file) {
+    // 小さいファイルはスキップ（画質維持のため）
+    if (file.size < COMPRESSION_CONFIG.skipThreshold &&
+        file.size < COMPRESSION_CONFIG.maxSizeForProcess) {
+        console.log(`スキップ（${(file.size / 1024 / 1024).toFixed(2)}MB）: ${file.name}`);
+        return file;
+    }
+
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -124,34 +141,63 @@ async function compressImage(file, maxWidth = 2048, quality = 0.85) {
                 // 元のサイズを取得
                 let width = img.width;
                 let height = img.height;
+                const originalWidth = width;
 
-                // リサイズが必要か確認
-                if (width > maxWidth) {
-                    height = (height * maxWidth) / width;
-                    width = maxWidth;
+                // リサイズが必要か確認（4K以上のみリサイズ）
+                if (width > COMPRESSION_CONFIG.maxWidth) {
+                    height = (height * COMPRESSION_CONFIG.maxWidth) / width;
+                    width = COMPRESSION_CONFIG.maxWidth;
                 }
 
-                // Canvasで圧縮
+                // リサイズも圧縮も不要な場合はスキップ
+                if (originalWidth <= COMPRESSION_CONFIG.maxWidth &&
+                    file.size < COMPRESSION_CONFIG.skipThreshold) {
+                    console.log(`処理スキップ: ${file.name}`);
+                    resolve(file);
+                    return;
+                }
+
+                // Canvasで処理
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d', {
+                    // 色空間を維持
+                    colorSpace: 'srgb'
+                });
+
+                // 高品質レンダリング設定
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, width, height);
+
+                // 元のフォーマットを維持
+                const isPNG = file.type === 'image/png';
+                const outputType = isPNG ? 'image/png' : 'image/jpeg';
+                const quality = isPNG ? COMPRESSION_CONFIG.pngQuality : COMPRESSION_CONFIG.jpegQuality;
 
                 // Blobに変換
                 canvas.toBlob((blob) => {
                     if (blob) {
+                        // 圧縮後のサイズが元より大きい場合は元のファイルを使用
+                        if (blob.size >= file.size) {
+                            console.log(`元ファイル使用（圧縮効果なし）: ${file.name}`);
+                            resolve(file);
+                            return;
+                        }
+
                         // 新しいFileオブジェクトを作成
                         const compressedFile = new File([blob], file.name, {
-                            type: 'image/jpeg',
+                            type: outputType,
                             lastModified: Date.now()
                         });
-                        console.log(`圧縮: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+                        const reduction = ((1 - compressedFile.size / file.size) * 100).toFixed(1);
+                        console.log(`最適化: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB (-${reduction}%)`);
                         resolve(compressedFile);
                     } else {
                         reject(new Error('圧縮に失敗しました'));
                     }
-                }, 'image/jpeg', quality);
+                }, outputType, quality);
             };
             img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
             img.src = e.target.result;
@@ -161,27 +207,35 @@ async function compressImage(file, maxWidth = 2048, quality = 0.85) {
     });
 }
 
-// ファイル処理（圧縮付き）
+// ファイル処理（並列処理で高速化）
 async function handleFiles(files) {
     const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
 
-    // 圧縮処理中の表示
+    // 処理中の表示
     if (imageFiles.length > 0) {
         dropzone.classList.add('processing');
-        dropzone.querySelector('.dropzone-content p').textContent = '画像を処理中...';
+        dropzone.querySelector('.dropzone-content p').textContent = `${imageFiles.length}枚の画像を処理中...`;
     }
 
-    for (const file of imageFiles) {
-        if (!selectedFiles.find(f => f.name === file.name)) {
-            try {
-                // 画像を圧縮
-                const compressedFile = await compressImage(file);
-                selectedFiles.push(compressedFile);
-            } catch (error) {
-                console.error('圧縮エラー:', error);
-                // 圧縮失敗時は元のファイルを使用
-                selectedFiles.push(file);
-            }
+    // 重複チェック
+    const newFiles = imageFiles.filter(file => !selectedFiles.find(f => f.name === file.name));
+
+    if (newFiles.length > 0) {
+        try {
+            // 並列処理で高速化
+            const processedFiles = await Promise.all(
+                newFiles.map(async (file) => {
+                    try {
+                        return await compressImage(file);
+                    } catch (error) {
+                        console.error('処理エラー:', error);
+                        return file; // エラー時は元ファイルを使用
+                    }
+                })
+            );
+            selectedFiles.push(...processedFiles);
+        } catch (error) {
+            console.error('バッチ処理エラー:', error);
         }
     }
 
