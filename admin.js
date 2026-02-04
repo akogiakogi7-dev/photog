@@ -115,8 +115,10 @@ const COMPRESSION_CONFIG = {
     pngQuality: 0.95,         // PNG品質
     skipThreshold: 2 * 1024 * 1024,  // 2MB以下はスキップ
     largeFileThreshold: 10 * 1024 * 1024,  // 10MB以上は特別処理
+    mobileSkipThreshold: 20 * 1024 * 1024, // モバイルで20MB以上はスキップ
+    pcSkipThreshold: 50 * 1024 * 1024,     // PCで50MB以上はスキップ
     mobileMaxWidth: 2560,     // モバイル用の最大幅
-    timeout: 60000            // 60秒タイムアウト
+    timeout: 30000            // 30秒タイムアウト（短縮）
 };
 
 /**
@@ -142,15 +144,28 @@ function updateProgress(message) {
  * - ObjectURLを使ってメモリ効率化
  * - 大きいファイルは段階的にリサイズ
  * - タイムアウト処理付き
+ * - 超大容量ファイルは処理スキップ
  * @param {File} file - 元の画像ファイル
  * @returns {Promise<File>} 最適化された画像ファイル
  */
 async function compressImage(file) {
     const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+    const mobile = isMobile();
 
     // 小さいファイルはスキップ（画質維持のため）
     if (file.size < COMPRESSION_CONFIG.skipThreshold) {
         console.log(`スキップ（${fileSizeMB}MB）: ${file.name}`);
+        return file;
+    }
+
+    // 大きすぎるファイルはブラウザ処理をスキップ（メモリ不足回避）
+    const skipThreshold = mobile
+        ? COMPRESSION_CONFIG.mobileSkipThreshold
+        : COMPRESSION_CONFIG.pcSkipThreshold;
+
+    if (file.size > skipThreshold) {
+        console.log(`⚠️ 大容量のため処理スキップ（${fileSizeMB}MB）: ${file.name}`);
+        updateProgress(`大容量ファイル - 直接アップロードします`);
         return file;
     }
 
