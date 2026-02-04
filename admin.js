@@ -105,7 +105,7 @@ fileInput.addEventListener('change', (e) => {
 });
 
 // ========================================
-// 画像圧縮機能（高画質モード）
+// 画像圧縮機能（大容量ファイル対応・高画質モード）
 // ========================================
 
 // 圧縮設定
@@ -114,70 +114,111 @@ const COMPRESSION_CONFIG = {
     jpegQuality: 0.92,        // 高画質JPEG（92%）
     pngQuality: 0.95,         // PNG品質
     skipThreshold: 2 * 1024 * 1024,  // 2MB以下はスキップ
-    maxSizeForProcess: 15 * 1024 * 1024  // 15MB以上は必ず処理
+    largeFileThreshold: 10 * 1024 * 1024,  // 10MB以上は特別処理
+    mobileMaxWidth: 2560,     // モバイル用の最大幅
+    timeout: 60000            // 60秒タイムアウト
 };
 
 /**
- * 画像を最適化する（高画質維持）
- * - 色情報やメタデータを可能な限り保持
- * - PNGはPNGのまま、JPEGはJPEGのまま処理
- * - 小さいファイルは処理をスキップ
+ * モバイルデバイスかどうかを判定
+ */
+function isMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+/**
+ * 進捗状況を更新
+ */
+function updateProgress(message) {
+    const dropzoneText = dropzone.querySelector('.dropzone-content p');
+    if (dropzoneText) {
+        dropzoneText.textContent = message;
+    }
+    console.log(message);
+}
+
+/**
+ * 画像を最適化する（大容量対応・高画質維持）
+ * - ObjectURLを使ってメモリ効率化
+ * - 大きいファイルは段階的にリサイズ
+ * - タイムアウト処理付き
  * @param {File} file - 元の画像ファイル
  * @returns {Promise<File>} 最適化された画像ファイル
  */
 async function compressImage(file) {
+    const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+
     // 小さいファイルはスキップ（画質維持のため）
-    if (file.size < COMPRESSION_CONFIG.skipThreshold &&
-        file.size < COMPRESSION_CONFIG.maxSizeForProcess) {
-        console.log(`スキップ（${(file.size / 1024 / 1024).toFixed(2)}MB）: ${file.name}`);
+    if (file.size < COMPRESSION_CONFIG.skipThreshold) {
+        console.log(`スキップ（${fileSizeMB}MB）: ${file.name}`);
         return file;
     }
 
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
+    updateProgress(`処理中: ${file.name} (${fileSizeMB}MB)...`);
+
+    // タイムアウト付きのPromise
+    const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('処理がタイムアウトしました')), COMPRESSION_CONFIG.timeout);
+    });
+
+    const processPromise = new Promise((resolve, reject) => {
+        // ObjectURLを使ってメモリ効率化
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+
+        img.onload = () => {
+            try {
+                // ObjectURLを解放
+                URL.revokeObjectURL(objectUrl);
+
                 // 元のサイズを取得
                 let width = img.width;
                 let height = img.height;
-                const originalWidth = width;
 
-                // リサイズが必要か確認（4K以上のみリサイズ）
-                if (width > COMPRESSION_CONFIG.maxWidth) {
-                    height = (height * COMPRESSION_CONFIG.maxWidth) / width;
-                    width = COMPRESSION_CONFIG.maxWidth;
+                // 最大幅を決定（モバイルは小さめ、大きいファイルも小さめ）
+                let maxWidth = COMPRESSION_CONFIG.maxWidth;
+                if (isMobile() || file.size > COMPRESSION_CONFIG.largeFileThreshold) {
+                    maxWidth = COMPRESSION_CONFIG.mobileMaxWidth;
                 }
 
-                // リサイズも圧縮も不要な場合はスキップ
-                if (originalWidth <= COMPRESSION_CONFIG.maxWidth &&
-                    file.size < COMPRESSION_CONFIG.skipThreshold) {
-                    console.log(`処理スキップ: ${file.name}`);
-                    resolve(file);
-                    return;
+                // リサイズが必要か確認
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
                 }
+
+                updateProgress(`リサイズ中: ${img.width}x${img.height} → ${width}x${height}`);
 
                 // Canvasで処理
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
-                const ctx = canvas.getContext('2d', {
-                    // 色空間を維持
-                    colorSpace: 'srgb'
-                });
+                const ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
 
                 // 高品質レンダリング設定
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // 元のフォーマットを維持
-                const isPNG = file.type === 'image/png';
-                const outputType = isPNG ? 'image/png' : 'image/jpeg';
-                const quality = isPNG ? COMPRESSION_CONFIG.pngQuality : COMPRESSION_CONFIG.jpegQuality;
+                // 元のフォーマットを維持（ただし大きいファイルはJPEGに）
+                let outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                let quality = file.type === 'image/png' ? COMPRESSION_CONFIG.pngQuality : COMPRESSION_CONFIG.jpegQuality;
+
+                // 大きいPNGはJPEGに変換（サイズ削減のため）
+                if (file.type === 'image/png' && file.size > COMPRESSION_CONFIG.largeFileThreshold) {
+                    outputType = 'image/jpeg';
+                    quality = COMPRESSION_CONFIG.jpegQuality;
+                    console.log('大きいPNGをJPEGに変換');
+                }
+
+                updateProgress('圧縮中...');
 
                 // Blobに変換
                 canvas.toBlob((blob) => {
+                    // Canvasをクリア（メモリ解放）
+                    canvas.width = 0;
+                    canvas.height = 0;
+
                     if (blob) {
                         // 圧縮後のサイズが元より大きい場合は元のファイルを使用
                         if (blob.size >= file.size) {
@@ -187,24 +228,46 @@ async function compressImage(file) {
                         }
 
                         // 新しいFileオブジェクトを作成
-                        const compressedFile = new File([blob], file.name, {
+                        const newFileName = outputType === 'image/jpeg' && !file.name.endsWith('.jpg') && !file.name.endsWith('.jpeg')
+                            ? file.name.replace(/\.[^.]+$/, '.jpg')
+                            : file.name;
+
+                        const compressedFile = new File([blob], newFileName, {
                             type: outputType,
                             lastModified: Date.now()
                         });
+
+                        const newSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
                         const reduction = ((1 - compressedFile.size / file.size) * 100).toFixed(1);
-                        console.log(`最適化: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB (-${reduction}%)`);
+                        console.log(`✅ 最適化完了: ${fileSizeMB}MB → ${newSizeMB}MB (-${reduction}%)`);
+                        updateProgress(`完了: ${fileSizeMB}MB → ${newSizeMB}MB`);
+
                         resolve(compressedFile);
                     } else {
                         reject(new Error('圧縮に失敗しました'));
                     }
                 }, outputType, quality);
-            };
-            img.onerror = () => reject(new Error('画像の読み込みに失敗しました'));
-            img.src = e.target.result;
+            } catch (error) {
+                reject(error);
+            }
         };
-        reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'));
-        reader.readAsDataURL(file);
+
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('画像の読み込みに失敗しました'));
+        };
+
+        img.src = objectUrl;
     });
+
+    // タイムアウトとProcessのレース
+    try {
+        return await Promise.race([processPromise, timeoutPromise]);
+    } catch (error) {
+        console.warn(`⚠️ 処理失敗、元ファイルを使用: ${error.message}`);
+        updateProgress(`処理スキップ: ${file.name}`);
+        return file;  // エラー時は元ファイルを使用
+    }
 }
 
 // ファイル処理（並列処理で高速化）
@@ -295,33 +358,61 @@ uploadForm.addEventListener('submit', async (e) => {
 
     // UIを更新
     uploadBtn.disabled = true;
-    uploadBtn.querySelector('.btn-text').classList.add('hidden');
-    uploadBtn.querySelector('.btn-loading').classList.remove('hidden');
+    const btnText = uploadBtn.querySelector('.btn-text');
+    const btnLoading = uploadBtn.querySelector('.btn-loading');
+    btnText.classList.add('hidden');
+    btnLoading.classList.remove('hidden');
 
     // 各ファイルをアップロード
+    let successCount = 0;
+    const totalFiles = selectedFiles.length;
+
     for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
         const fileTitle = selectedFiles.length > 1 ? `${title} (${i + 1})` : title;
+        const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
 
-        const result = await uploadImage(file, category, fileTitle);
+        // 進捗コールバック
+        const onProgress = (percent, transferred, total) => {
+            const transferredMB = (transferred / 1024 / 1024).toFixed(1);
+            const totalMB = (total / 1024 / 1024).toFixed(1);
+            btnLoading.textContent = `(${i + 1}/${totalFiles}) ${percent.toFixed(0)}% - ${transferredMB}/${totalMB}MB`;
+        };
 
-        if (!result.success) {
-            alert(`アップロードエラー: ${result.error}`);
+        btnLoading.textContent = `(${i + 1}/${totalFiles}) アップロード中... ${fileSizeMB}MB`;
+
+        const result = await uploadImage(file, category, fileTitle, onProgress);
+
+        if (result.success) {
+            successCount++;
+        } else {
+            console.error(`アップロードエラー: ${result.error}`);
+            alert(`アップロードエラー (${file.name}): ${result.error}`);
         }
     }
 
-    // リセット
-    selectedFiles = [];
-    updatePreview();
-    titleInput.value = '';
-    fileInput.value = '';
+    // 完了メッセージ
+    if (successCount === totalFiles) {
+        btnLoading.textContent = `${successCount}枚アップロード完了！`;
+    } else {
+        btnLoading.textContent = `${successCount}/${totalFiles}枚完了`;
+    }
 
-    uploadBtn.disabled = false;
-    uploadBtn.querySelector('.btn-text').classList.remove('hidden');
-    uploadBtn.querySelector('.btn-loading').classList.add('hidden');
+    // リセット（少し待ってから）
+    setTimeout(() => {
+        selectedFiles = [];
+        updatePreview();
+        titleInput.value = '';
+        fileInput.value = '';
 
-    // 画像一覧を再読み込み
-    loadImages();
+        uploadBtn.disabled = false;
+        btnText.classList.remove('hidden');
+        btnLoading.classList.add('hidden');
+        btnLoading.textContent = 'アップロード中...';
+
+        // 画像一覧を再読み込み
+        loadImages();
+    }, 1500);
 });
 
 // ========================================

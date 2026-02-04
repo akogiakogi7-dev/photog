@@ -12,7 +12,7 @@
 // Firebase SDK (CDN版を使用)
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getStorage, ref, uploadBytes, getDownloadURL, listAll, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, listAll, deleteObject } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
 
 // ========================================
 // 🔧 ここを自分のFirebase設定に置き換えてください
@@ -78,44 +78,67 @@ export function getCurrentUser() {
 // ========================================
 
 /**
- * 画像をアップロード
+ * 画像をアップロード（プログレス表示対応）
  * @param {File} file - アップロードするファイル
  * @param {string} category - カテゴリ (landscape, portrait, street)
  * @param {string} title - 写真のタイトル
+ * @param {function} onProgress - 進捗コールバック（省略可）
  */
-export async function uploadImage(file, category, title) {
-    try {
-        // ファイル名を生成（タイムスタンプ + 元のファイル名）
-        const timestamp = Date.now();
-        const fileName = `${timestamp}_${file.name}`;
-        const filePath = `gallery/${category}/${fileName}`;
+export async function uploadImage(file, category, title, onProgress = null) {
+    return new Promise((resolve, reject) => {
+        try {
+            // ファイル名を生成（タイムスタンプ + 元のファイル名）
+            const timestamp = Date.now();
+            const fileName = `${timestamp}_${file.name}`;
+            const filePath = `gallery/${category}/${fileName}`;
 
-        // メタデータを設定
-        const metadata = {
-            customMetadata: {
-                title: title,
-                category: category,
-                uploadedAt: new Date().toISOString()
-            }
-        };
+            // メタデータを設定
+            const metadata = {
+                customMetadata: {
+                    title: title,
+                    category: category,
+                    uploadedAt: new Date().toISOString()
+                }
+            };
 
-        // アップロード
-        const storageRef = ref(storage, filePath);
-        await uploadBytes(storageRef, file, metadata);
+            // Resumableアップロード（進捗表示対応）
+            const storageRef = ref(storage, filePath);
+            const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
-        // ダウンロードURLを取得
-        const downloadURL = await getDownloadURL(storageRef);
-
-        return {
-            success: true,
-            url: downloadURL,
-            path: filePath,
-            title: title,
-            category: category
-        };
-    } catch (error) {
-        return { success: false, error: error.message };
-    }
+            uploadTask.on('state_changed',
+                // 進捗ハンドラ
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log(`アップロード進捗: ${progress.toFixed(1)}%`);
+                    if (onProgress) {
+                        onProgress(progress, snapshot.bytesTransferred, snapshot.totalBytes);
+                    }
+                },
+                // エラーハンドラ
+                (error) => {
+                    console.error('アップロードエラー:', error);
+                    resolve({ success: false, error: error.message });
+                },
+                // 完了ハンドラ
+                async () => {
+                    try {
+                        const downloadURL = await getDownloadURL(storageRef);
+                        resolve({
+                            success: true,
+                            url: downloadURL,
+                            path: filePath,
+                            title: title,
+                            category: category
+                        });
+                    } catch (error) {
+                        resolve({ success: false, error: error.message });
+                    }
+                }
+            );
+        } catch (error) {
+            resolve({ success: false, error: error.message });
+        }
+    });
 }
 
 /**
