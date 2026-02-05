@@ -1,51 +1,18 @@
-# Photo Gallery - 使い方
+# Leica Portfolio
 
-## 📸 写真の追加方法
+A personal photography portfolio showcasing Leica captures.
 
-### 方法1: 直接HTMLを編集（今すぐ使える）
+## Overview
 
-`index.html` を開いて、写真を追加・変更：
+This project is built with Next.js and Tailwind CSS, focused on a minimal and premium aesthetic to highlight photography work.
 
-```html
-<div class="gallery-item" data-watermark="© あなたの名前" data-category="landscape">
-    <img src="images/your-photo.jpg"
-         data-full="images/your-photo.jpg"
-         alt="写真の説明" loading="lazy">
-    <div class="overlay">
-        <span class="photo-title">写真のタイトル</span>
-    </div>
-</div>
-```
+## Features
 
-### カテゴリ
-- `landscape` - 風景
-- `portrait` - ポートレート  
-- `street` - ストリート
+-   **Dynamic Gallery**: Photos are managed via a JSON configuration file.
+-   **Responsive Design**: Optimized for all devices.
+-   **Premium UI**: Custom animations and layout.
 
----
+## Deployment
 
-## 🔒 保護機能
-
-- ✅ ウォーターマーク表示
-- ✅ 右クリック無効
-- ✅ ドラッグ無効
-- ✅ キーボードショートカット無効
-
----
-
-## 📂 ファイル構成
-
-```
-photog/
-├── index.html      ← メインページ
-├── styles.css      ← スタイル
-├── gallery.js      ← ギャラリー機能
-├── images/         ← あなたの写真を入れるフォルダ
-└── README.md       ← このファイル
-```
-
----
-
-## 🚀 Firebase版（後で設定）
-
-アップロード機能を使いたい場合は `FIREBASE_SETUP.md` を参照してください。
+This site is configured for deployment on Vercel.
+Last updated: 2026-02-05
