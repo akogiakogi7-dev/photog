@@ -13,8 +13,8 @@ export default function Gallery() {
 
     // Filter images
     const filteredImages = useMemo(() => {
-        if (filter === "all") return galleryData;
-        return galleryData.filter((img) => img.category === filter);
+        if (filter === "all") return galleryData.slice(0, 20);
+        return galleryData.filter((img) => img.category === filter).slice(0, 20);
     }, [filter]);
 
     // Handle Lightbox Navigation
@@ -70,8 +70,8 @@ export default function Gallery() {
                                 key={cat}
                                 onClick={() => setFilter(cat)}
                                 className={`px-6 py-2 rounded-full text-sm tracking-widest uppercase transition-all duration-300 ${filter === cat
-                                        ? "bg-white text-black font-medium"
-                                        : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                                    ? "bg-white text-black font-medium"
+                                    : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
                                     }`}
                             >
                                 {cat}
