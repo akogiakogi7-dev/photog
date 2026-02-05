@@ -59,7 +59,7 @@ export default function Hero() {
 
                 {/* Main Heading */}
                 <motion.h1
-                    className="heading-display mb-12 text-5xl md:text-7xl lg:text-8xl tracking-tighter text-shadow-lg"
+                    className="heading-display mb-8 md:mb-12 text-4xl md:text-7xl lg:text-8xl tracking-tighter text-shadow-lg"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 0.5 }}
@@ -70,18 +70,19 @@ export default function Hero() {
                 </motion.h1>
 
                 {/* Subtitle - Updated Text & Font */}
-                <motion.p
-                    className="font-shippori text-lg md:text-2xl font-medium text-light-text-secondary dark:text-dark-text-secondary leading-relaxed mb-20 tracking-widest text-shadow-md"
+                <motion.div
+                    className="font-shippori text-sm md:text-2xl font-medium text-light-text-secondary dark:text-dark-text-secondary leading-relaxed mb-16 md:mb-20 tracking-widest text-shadow-md"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.5, delay: 1.0, ease: "easeOut" }}
                 >
-                    ーライカを手に、日常の余白を切り取るー
-                </motion.p>
+                    <span className="block md:inline">ーライカを手に、</span>
+                    <span className="block md:inline">日常の余白を切り取るー</span>
+                </motion.div>
 
                 {/* SNS Links - Prominent Placement */}
                 <motion.div
-                    className="flex items-center justify-center gap-8 mb-24"
+                    className="flex items-center justify-center gap-6 md:gap-8 mb-20 md:mb-24 scale-90 md:scale-100"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 1.4 }}
@@ -95,10 +96,10 @@ export default function Hero() {
                             className="group flex flex-col items-center gap-3 transition-transform hover:-translate-y-1"
                             aria-label={link.name}
                         >
-                            <div className="p-4 rounded-full border border-light-text-secondary/20 dark:border-dark-text-secondary/20 bg-white/5 backdrop-blur-sm group-hover:bg-leica-red group-hover:border-leica-red group-hover:text-white transition-all duration-300 shadow-sm">
+                            <div className="p-3 md:p-4 rounded-full border border-light-text-secondary/20 dark:border-dark-text-secondary/20 bg-white/5 backdrop-blur-sm group-hover:bg-leica-red group-hover:border-leica-red group-hover:text-white transition-all duration-300 shadow-sm">
                                 {link.icon}
                             </div>
-                            <span className="text-xs uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] md:text-xs uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">
                                 {link.name}
                             </span>
                         </a>
